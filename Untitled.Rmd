@@ -1,0 +1,401 @@
+---
+title: "midstone"
+author: "tekie"
+date: "1/21/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(readxl)
+library(tidyr)
+library(tidyverse)
+library(splitstackshape)
+library(janitor)
+library(plotly)
+library(ggplot2)
+library(maptools)
+library(ggmap)
+library(data.table)
+library(stringr)
+library(leaflet)
+
+```
+
+```{r}
+mass_shooting_data <- read_csv("~/midstone_project/data/Mother Jones - Mass Shootings Database, 1982 - 2018 - Sheet1.csv")
+mass_shooting_data <- mass_shooting_data %>% separate(location, c('city','state'), sep=",")
+
+get_abbrev <- function(long_name) {
+  print(long_name)
+  if(long_name=="D.C.") {
+    state_abbrev <- "DC"
+    }
+    else if(nchar(long_name) > 2) {
+      index_value <- match(long_name,state.name)
+      state_abbrev <- state.abb[index_value]
+    } 
+  else {
+    state_abbrev <-long_name
+    }
+return(state_abbrev)
+  }
+   
+# trim the white space from the state column 
+mass_shooting_data$state <- sapply(mass_shooting_data$state,str_trim)
+
+# use get_abbrev to return 2 charachter abbrev for every state
+mass_shooting_data$state_2 <- sapply(mass_shooting_data$state,get_abbrev)
+
+
+mass_shooting_df <- mass_shooting_data %>% select(., -state,-mental_health_details,-case,-prior_signs_mental_health_issues,-mental_health_sources,-sources_additional_age,-summary,-date,-where_obtained,-weapon_details,-sources,-type,-race)
+
+```
+
+```{r}
+ggplot(mass_shooting_df, aes(x=reorder(state_2,total_victims), y=total_victims)) + geom_bar(stat='identity') +
+  xlab('State') + ylab('fatalities by State') + theme_minimal()+coord_flip()
+
+```
+
+```{r}
+pie <- ggplot(mental_health_df, aes(x = "", fill = factor(prior_signs_mental_health_issues))) + 
+  geom_bar(width = 1) +
+  theme(axis.line = element_blank(), 
+        plot.title = element_text(hjust=0.5),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+         panel.grid  = element_blank()) + 
+  
+      labs(fill="Mental Health Issues", 
+       x=NULL, 
+       y=NULL)
+      
+       
+
+pie + coord_polar(theta = "y")
+
+```
+
+```{r}
+mass_shooting_locations <- mass_shooting_df %>% 
+  group_by(state,incident_location) %>%
+  summarize(location_count = n())
+mass_shooting_locations$incident_location[mass_shooting_locations$incident_location == "Other\n"] <-  "Other" 
+mass_shooting_locations$incident_location[mass_shooting_locations$incident_location == "\nWorkplace"] <-  "Workplace"
+
+ggplot(mass_shooting_locations, aes(x=state, y=location_count,fill=incident_location)) + geom_bar(stat='identity',position='fill') +
+  xlab('State') + ylab('mass shotting locations') + theme_minimal()
+
+
+```
+
+```{r}
+mass_shooting_weapons <- cSplit(as.data.table(mass_shooting_df)[, weapon_type := gsub("[][\"]", "", weapon_type)], 
+       "weapon_type", ",", "long")
+
+mass_shooting_status <- mass_shooting_weapons %>%
+  group_by(state_2,weapons_obtained_legally) %>%
+  summarize(weapon_legal_status = n())
+
+
+
+
+mass_shooting_status$weapons_obtained_legally[mass_shooting_status$weapons_obtained_legally == "Kelley passed federal criminal background checks; the US Air Force failed to provide information on his criminal history to the FBI"] <-"Yes" 
+mass_shooting_status$weapons_obtained_legally[mass_shooting_status$weapons_obtained_legally == "Yes (\"some of the weapons were purchased legally and some of them may not have been\")"] <- "Yes"
+mass_shooting_status$weapons_obtained_legally[mass_shooting_status$weapons_obtained_legally == "\nYes"] <- "Yes" 
+mass_shooting_status$weapons_obtained_legally[mass_shooting_status$weapons_obtained_legally == "-"] <- "Unknown" 
+
+
+
+
+ggplot(mass_shooting_status, aes(x=state_2, y=weapon_legal_status,fill=weapons_obtained_legally)) + geom_bar(stat='identity',position = "fill") +
+  xlab('State') + ylab('Weapons Legal Status') + theme_minimal()
+
+```
+
+```{r}
+ggplot(mass_shooting_status, aes(x=weapons_obtained_legally, y=weapon_legal_status)) + geom_bar(stat='identity') + theme_minimal() + ggtitle("Mass Shooting Weapons Legal Status")
+```
+
+```{r}
+shooting_year <- mass_shooting_df %>%
+  group_by(year,state_2) %>%
+  summarise(year_total=n())
+  
+ggplot(shooting_year, aes(x=factor(year), y=year_total)) + geom_bar(stat='identity') +
+  scale_y_continuous(breaks = seq(1,12, by = 1)) +
+  xlab('Years') + ylab('Mass Shooting Count') + theme_minimal()  + coord_flip() + 
+  ggtitle("Mass Shootings 1982-2018")
+
+```
+
+```{r}
+gun_control_state <- read_csv("~/midstone_project/data/gun_control.csv")
+names(gun_control_state) <- gsub(" ", "_", names(gun_control_state))
+
+setnames(gun_control_state, old = c('High_capacity_magazines_ban','Prohibitions_high_risk_individuals',
+                                    'Prohibitions_for_individual_with_domestic_violence_convictions',
+                                    'Mandatory_universal_background-checks'), 
+         new = c('High_capacity_ban','high_risk_individuals',
+                 'domestic_violence_convictions','background-checks'))
+
+#gun_control_state <- gun_control_state %>% select(-Total)
+
+
+
+gun_control_state$State<- c(gun_control_state$State)
+gun_control_state$State<-state.abb[match(gun_control_state$State,state.name)]
+gun_control_state$total <- rowSums(gun_control_state[,2:8], na.rm=TRUE)
+gun_control_state <- gun_control_state%>% select(-total)
+gun_control_state <- gun_control_state %>% select(-Total)
+
+
+  
+```
+
+```{r}
+gun_control_types <- melt(gun_control_state, id.vars=c('State'),var='Laws')
+gun_control_types <- melt(gun_control_state, id.vars=c('State'),var='Laws')
+gun_control_types
+
+#gun_control_types <- gun_control_types %>% select(-total)
+#gun_control_types <- gun_control_types %>% select(-total)
+
+
+ggplot(gun_control_types, aes(x=State,y=value,fill=Laws)) + 
+  geom_bar(stat="identity",position = "fill") +
+  theme_minimal()+ scale_colour_brewer(palette="Set3") +
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.title = element_blank(),
+        legend.text=element_text(size=15))
+
+```
+
+```{r}
+l <- list(color = toRGB("white"), width = 2)
+g <- list(
+  scope = 'usa',
+  projection = list(type = 'albers usa'),
+  showlakes = FALSE,
+  lakecolor = toRGB('white')
+)
+plot_geo(gun_control_types, locationmode = 'USA-states') %>%
+  add_trace(
+    z = ~value, locations = ~State,zmin = 0, zmax = 7,
+    colors = 'Blues'
+  ) %>%
+  colorbar(title = "Gun Control legislations") %>%
+  layout(
+    geo = g) 
+```
+
+```{r}
+library(readxl)
+population_guns_state <- read_excel("~/midstone_project/data/population_by_state (1).xlsx",col_names = FALSE)                                      
+                                       
+names(population_guns_state) <- NULL
+population_guns_state<- population_guns_state[-c(1), ]
+
+ 
+ 
+ 
+names(population_guns_state) <- as.matrix(population_guns_state[1, ])
+#guns_per_capita <- population_by_state_1_[-1, ]
+population_guns_state[] <- lapply(population_guns_state, function(x) type.convert(as.character(x)))
+population_guns_state <- population_guns_state[-c(1), ]
+population_guns_state$State<- gsub(".", "", population_guns_state$State, fixed = TRUE)
+ 
+ 
+ 
+ 
+
+population_guns_state$State<- c(population_guns_state$State)
+population_guns_state$State<-state.abb[match(population_guns_state$State,state.name)]
+
+# calculate per capita gun by state
+population_guns_state$registered_gun_17 <- as.numeric(as.character(population_guns_state$registered_gun_17))
+population_guns_state$registered_gun_18 <- as.numeric((as.character(population_guns_state$registered_gun_18)))
+population_guns_state$per_capita_17 <- (population_guns_state$registered_gun_17 / population_guns_state$`2017`)
+population_guns_state$per_capita_18 <- (population_guns_state$registered_gun_18 / population_guns_state$`2018`)
+population_guns_state$change_per_capita <-(population_guns_state$per_capita_18 - population_guns_state$per_capita_17)
+
+ 
+ 
+ #States with the most guns per capita
+ 
+ ggplot(population_guns_state,aes(x=reorder(State,registered_gun_17),y=registered_gun_17,fill=(registered_gun_18))) + geom_bar(stat='identity') + xlab('State') + ylab('Value')
+ 
+ ggplot(population_guns_state,aes(x=reorder(State,registered_gun_18),y=registered_gun_18)) + geom_bar(stat='identity') + xlab('State') + ylab('Value')
+ 
+ ggplot(population_guns_state,aes(x=reorder(State,per_capita_17),y=per_capita_17)) + geom_bar(stat='identity') + xlab('State') + ylab('Value')
+ 
+ 
+  #GUNS PER CAPITA BY STATE
+ 
+ l <- list(color = toRGB("white"), width = 2)
+ g <- list(
+   scope = 'usa',
+   projection = list(type = 'albers usa'),
+   showlakes = FALSE,
+   lakecolor = toRGB('white')
+ )
+ plot_geo(population_guns_state, locationmode = 'USA-states') %>%
+   add_trace(
+     z = ~per_capita_17, locations = ~State,zmin = 0.01, zmax = 0.025,
+     colors = 'Blues'
+   ) %>%
+   colorbar(title = "Guns Per Capita") %>%
+   layout(
+     geo = g)
+```
+
+```{r}
+require(dplyr)
+ guns.ordered <- arrange(population_guns_state, -registered_gun_18)
+ guns.top10 <- guns.ordered[1:10,]
+ 
+ ggplot(guns.top10,aes(x=reorder(State,-registered_gun_18),y=registered_gun_18)) + 
+   geom_bar(stat='identity') + xlab('State') + ylab('Guns Registered') 
+ 
+```
+
+```{r}
+guns.ordered_17 <- arrange(population_guns_state, registered_gun_17)
+guns.top10_17 <- guns.ordered[1:10,]
+
+ggplot(guns.top10_17,aes(x=reorder(State,-registered_gun_17),y=registered_gun_17)) + 
+  geom_bar(stat='identity') + xlab('State') + ylab('Guns Registered')
+
+ 
+```
+
+```{r}
+state_count <- mass_shooting_df %>%
+     group_by(state_2) %>%
+     summarise(state_total=n())
+
+
+
+
+
+l <- list(color = toRGB("white"), width = 2)
+g <- list(
+  scope = 'usa',
+  projection = list(type = 'albers usa'),
+  showlakes = FALSE,
+  lakecolor = toRGB('white')
+)
+plot_geo(state_count, locationmode = 'USA-states') %>%
+  add_trace(
+    z = ~state_total, locations = ~state_2,zmin = 1, zmax = 19,
+    colors = 'Blues'
+  ) %>%
+  colorbar(title = "Mass Shootings by State") %>%
+  layout(
+    geo = g)
+```
+
+```{r}
+ggplot(population_guns_state,aes(x=reorder(State,change_per_capita),y=change_per_capita)) + geom_bar(stat='identity') + xlab('State') + ylab('Value')+ggtitle("Gun Per Capita Change by State") 
+```
+
+```{r}
+library(readxl)
+states_lat_lng <- read_excel("~/midstone_project/data/states_lat_lng.xlsx",skip=1)
+states_lat_lng$State<- c(states_lat_lng$State)
+states_lat_lng$State<-state.abb[match(states_lat_lng$State,state.name)]
+gun_states <- merge(population_guns_state,states_lat_lng,by="State")
+  
+```
+
+```{r}
+ggplot(population_guns_state,aes(x=reorder(State,registered_gun_17),y=registered_gun_17,fill=(registered_gun_18))) + geom_bar(stat='identity') + xlab('State') + ylab('Value')
+ 
+ ggplot(population_guns_state,aes(x=reorder(State,registered_gun_18),y=registered_gun_18)) + geom_bar(stat='identity') + xlab('State') + ylab('Value')
+ 
+ ggplot(population_guns_state,aes(x=reorder(State,per_capita_17),y=per_capita_17)) + geom_bar(stat='identity') + xlab('State') + ylab('Value')
+ 
+```
+
+```{r}
+l <- list(color = toRGB("white"), width = 2)
+ g <- list(
+   scope = 'usa',
+   projection = list(type = 'albers usa'),
+   showlakes = FALSE,
+   lakecolor = toRGB('white')
+ )
+ plot_geo(population_guns_state, locationmode = 'USA-states') %>%
+   add_trace(
+     z = ~per_capita_18, locations = ~State,zmin =  0.003889954, zmax = 0.2293975,
+     colors = 'Blues'
+   ) %>%
+   colorbar(title = "Guns Per Capita") %>%
+   layout(
+     geo = g)
+```
+
+```{r}
+l <- list(color = toRGB("white"), width = 2)
+ g <- list(
+   scope = 'usa',
+   projection = list(type = 'albers usa'),
+   showlakes = FALSE,
+   lakecolor = toRGB('white')
+ )
+ plot_geo(population_guns_state, locationmode = 'USA-states') %>%
+   add_trace(
+     z = ~per_capita_17, locations = ~State,zmin = 0.01, zmax = 0.025,
+     colors = 'Blues'
+   ) %>%
+   colorbar(title = "Guns Per Capita") %>%
+   layout(
+     geo = g)
+```
+
+```{r}
+state_count <- mass_shooting_df %>%
+     group_by(state_2) %>%
+     summarise(state_total=n())
+guns_and_shootings <- merge(x=state_count,y=population_guns_state,by.x="state_2",by.y="State")
+
+
+   ggplot(guns_and_shootings, aes(x=per_capita_18, y=state_total,size=per_capita_18)) +
+     geom_point(color='#8e82fe') + 
+     geom_smooth(method = "lm") +
+     theme_minimal() +  theme(legend.position="none") +
+     xlab('Gun Per Capita 2018') + ylab('Mass Shooting 1982-2018')
+   
+   
+   
+   
+   
+   
+   
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
