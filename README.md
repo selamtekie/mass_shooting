@@ -15,6 +15,15 @@ Data Question
 How do states with higher rates of gun ownership rank in relations to mass shootings ?
 
 
+<img width="815" alt="screen shot 2019-01-25 at 10 23 16 pm" src="https://user-images.githubusercontent.com/42395543/51782695-69c1e500-20f2-11e9-9219-ee9d67612513.png">
+
+<img width="748" alt="screen shot 2019-01-25 at 10 16 57 pm" src="https://user-images.githubusercontent.com/42395543/51782697-6fb7c600-20f2-11e9-8bbd-a7077e6bd440.png">
+
+
+<img width="565" alt="screen shot 2019-01-25 at 10 16 42 pm" src="https://user-images.githubusercontent.com/42395543/51782698-734b4d00-20f2-11e9-9aec-25e96a39902c.png">
+
+
+<img width="785" alt="screen shot 2019-01-25 at 10 17 23 pm" src="https://user-images.githubusercontent.com/42395543/51782702-78a89780-20f2-11e9-846a-8ab925e5f43a.png">
 
 
 
