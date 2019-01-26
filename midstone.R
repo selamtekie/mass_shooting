@@ -74,32 +74,35 @@ mass_shooting_df$where_obtained[mass_shooting_df$where_obtained=="(Unclear; inve
 
 
 # pltoing fatalities by state
-ggplot(mass_shooting_df, aes(x=reorder(state_2,total_victims), y=total_victims)) + geom_bar(stat='identity') +
+ggplot(mass_shooting_df, aes(x=reorder(state,-total_victims), y=total_victims)) + geom_bar(stat='identity') +
   xlab('State') + ylab('fatalities by State') + theme_minimal()+coord_flip()
 
 
 #mass shooting locations by state 
 
 mass_shooting_locations <- mass_shooting_df %>% 
-  group_by(state_2,location_1) %>%
+  group_by(state,incident_location) %>%
   summarize(location_count = n())
 
-ggplot(mass_shooting_locations, aes(x=state_2, y=location_count,fill=location_1)) + geom_bar(stat='identity') +
+ggplot(mass_shooting_locations, aes(x=state, y=location_count,fill=incident_location)) + geom_bar(stat='identity') +
   xlab('State') + ylab('mass shotting locations') + theme_minimal()
 
 
 # splitting variables separarted by comma
 
 library(splitstackshape)
-mass_shooting_weapons <- cSplit(as.data.table(mass_shooting_df)[, weapon_type := gsub("[][\"]", "", weapon_type)], 
-       "weapon_type", ",", "long")
+mass_shooting_weapons <- cSplit(as.data.table(mass_shooting_df)[, weapon_description := gsub("[][\"]", "", weapon_description)], 
+       "weapon_description", ",", "long")
 
 # cleaning up weapons column
 mass_shooting_status <- mass_shooting_weapons %>%
-  group_by(state_2,weapons_obtained_legally) %>%
+  group_by(state,weapons_obtained_legally) %>%
   summarize(weapon_legal_status = n())
 
 
+ggplot(mass_shooting_status, aes(x=weapons_obtained_legally, y=weapon_legal_status)) + 
+  geom_bar(stat='identity') + theme_minimal() + ggtitle("Weapons Legal Status 1982-2018")+
+  xlab('Legal Status') + ylab('Number Of Incidents')
 
 # plotting weapons legal status
 ggplot(mass_shooting_status, aes(x=state_2, y=weapon_legal_status,fill=weapons_obtained_legally)) + geom_bar(stat='identity',position = "fill") +
@@ -109,7 +112,7 @@ ggplot(mass_shooting_status, aes(x=state_2, y=weapon_legal_status,fill=weapons_o
 # mental health status
 
 mental_health_df <- mass_shooting_data %>%
-  group_by(state_2,prior_signs_mental_health_issues) %>%
+  group_by(state,prior_signs_mental_health_issues) %>%
   summarize(total = n())
 
 pie <- ggplot(mental_health_df, aes(x = "", fill = factor(prior_signs_mental_health_issues))) + 
@@ -129,12 +132,12 @@ pie <- ggplot(mental_health_df, aes(x = "", fill = factor(prior_signs_mental_hea
 
 # mass shooting incidents by year
 shooting_year <- mass_shooting_df %>%
-  group_by(year,state_2) %>%
+  group_by(year,state) %>%
   summarise(year_total=n())
   
 ggplot(shooting_year, aes(x=factor(year), y=year_total)) + geom_bar(stat='identity') +
   scale_y_continuous(breaks = seq(1,12, by = 1)) +
-  xlab('State') + ylab('fatalities by city') + theme_minimal()  + coord_flip()
+  xlab("Years") + ylab('Number of Mass Shootings') + theme_minimal()  + coord_flip()
 
 
 #Registered gun licenses and population by state 2016

@@ -9,14 +9,15 @@ library(leaflet)
 library(data.table)
 
 
-mass_shooting_df <- readRDS("~/midstone_project/data/mass_shooting_df.rds")
-population_guns_state <- readRDS("~/midstone_project/data/population_guns_state.rds")
-gun_states <- readRDS("~/midstone_project/data/gun_states.rds")
-guns_and_shootings <- readRDS("~/midstone_project/data/guns_and_shootings.rds")
-gun_control_types <- readRDS("~/midstone_project/data/gun_control_types.rds")
-mass_shooting_status <- readRDS("~/midstone_project/data/mass_shooting_status.rds")
+mass_shooting_df <- readRDS("~/midstone_project/midstone_shiny/data/mass_shooting_df.rds")
+population_guns_state <- readRDS("~/midstone_project/midstone_shiny/data/population_guns_state.rds")
+gun_states <- readRDS("~/midstone_project/midstone_shiny/data/gun_states.rds")
+guns_and_shootings <- readRDS("~/midstone_project/midstone_shiny/data/guns_and_shootings.rds")
+gun_control_types <- readRDS("~/midstone_project/midstone_shiny/data/gun_control_types.rds")
+mass_shooting_status <- readRDS("~/midstone_project/midstone_shiny/data/mass_shooting_status.rds")
 mass_shooting_status <- as.data.table(mass_shooting_status)
-gun_control <- readRDS("~/midstone_project/data/gun_control_types.rds")
+gun_control <- readRDS("~/midstone_project/midstone_shiny/data/gun_control_types.rds")
+
 
 
 

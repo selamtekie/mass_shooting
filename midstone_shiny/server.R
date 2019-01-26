@@ -54,7 +54,6 @@ server <- function(input, output) {
                               "Weapons_obtained_legally:",mass_shooting_df$weapons_obtained_legally, "<br>",
                               "Weapon_description:",mass_shooting_df$weapon_description, "<br>",
                               "Gender:",mass_shooting_df$gender, "<br>",
-                              "Age_of_shooter:",mass_shooting_df$age_of_shooter, "<br>",
                               "Year:",mass_shooting_df$year, "<br>",
                               "Summary:",mass_shooting_df$summary,"<br>"))
   })
