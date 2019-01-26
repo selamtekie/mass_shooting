@@ -17,7 +17,7 @@ How do states with higher rates of gun ownership rank in relations to mass shoot
 
 <img width="815" alt="screen shot 2019-01-25 at 10 23 16 pm" src="https://user-images.githubusercontent.com/42395543/51782695-69c1e500-20f2-11e9-9219-ee9d67612513.png">
 
-<img width="748" alt="screen shot 2019-01-25 at 10 16 57 pm" src="https://user-images.githubusercontent.com/42395543/51782697-6fb7c600-20f2-11e9-8bbd-a7077e6bd440.png">
+<img width="841" alt="screen shot 2019-01-25 at 11 59 05 pm" src="https://user-images.githubusercontent.com/42395543/51783274-3f295980-20fd-11e9-8c35-23f9665652ff.png">
 
 
 <img width="565" alt="screen shot 2019-01-25 at 10 16 42 pm" src="https://user-images.githubusercontent.com/42395543/51782698-734b4d00-20f2-11e9-9aec-25e96a39902c.png">
