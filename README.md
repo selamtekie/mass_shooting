@@ -14,6 +14,9 @@ There are numerous studies on public mass shootings and gun control policies. Gu
 
 How do states with higher rates of gun ownership rank in relations to mass shootings ?
 
+# Shiny Dashboard
+View and interact with the Shiny Dashboard 
+https://selamtekie.shinyapps.io/midstone_shiny/
 
 <img width="815" alt="screen shot 2019-01-25 at 10 23 16 pm" src="https://user-images.githubusercontent.com/42395543/51782695-69c1e500-20f2-11e9-9219-ee9d67612513.png">
 
